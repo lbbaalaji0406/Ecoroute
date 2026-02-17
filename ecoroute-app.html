@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0D0D0D">
+<title>EcoRoute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ────────────────────────────────── */
+:root{
+  --black:#0D0D0D;
+  --surface:#161616;
+  --surface2:#1E1E1E;
+  --surface3:#252525;
+  --border:#2A2A2A;
+  --border2:#333;
+  --green:#00C853;
+  --green2:#00A846;
+  --green-bg:rgba(0,200,83,.08);
+  --green-border:rgba(0,200,83,.2);
+  --amber:#FF9500;
+  --amber-bg:rgba(255,149,0,.08);
+  --red:#FF3B30;
+  --red-bg:rgba(255,59,48,.08);
+  --blue:#007AFF;
+  --blue-bg:rgba(0,122,255,.08);
+  --text:#FFFFFF;
+  --text2:#AEAEB2;
+  --text3:#636366;
+  --divider:#2A2A2A;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+
+/* ─── RESET ────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:hidden;background:var(--black)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:var(--text);font-size:15px;line-height:1.4}
+input{border:none;outline:none;background:transparent;font-family:inherit;color:var(--text);font-size:15px}
+button{border:none;background:none;cursor:pointer;font-family:inherit;-webkit-appearance:none}
+input::placeholder{color:var(--text3)}
+
+/* ─── APP SHELL ─────────────────────────────────────── */
+#app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  max-width:430px;
+  margin:0 auto;
+  position:relative;
+  overflow:hidden;
+  background:var(--black);
+}
+
+/* ─── STATUS BAR ────────────────────────────────────── */
+.status{
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  flex-shrink:0;
+  background:var(--black);
+}
+.status-time{font-size:15px;font-weight:600;letter-spacing:-.2px}
+.status-icons{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text)}
+
+/* ─── SCREENS ───────────────────────────────────────── */
+.screens{flex:1;position:relative;overflow:hidden}
+.screen{
+  position:absolute;inset:0;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  opacity:0;pointer-events:none;
+  transform:translateX(20px);
+  transition:opacity .25s ease,transform .25s ease;
+  padding-bottom:80px;
+}
+.screen::-webkit-scrollbar{display:none}
+.screen.active{opacity:1;pointer-events:all;transform:translateX(0)}
+.screen.slide-out{opacity:0;transform:translateX(-20px)}
+
+/* ─── HEADER / NAV BACK ─────────────────────────────── */
+.nav-header{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px 8px;
+  background:var(--black);
+  position:sticky;top:0;z-index:10;
+}
+.back-btn{
+  width:36px;height:36px;
+  border-radius:50%;
+  background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1;
+  flex-shrink:0;
+  transition:background .15s;
+}
+.back-btn:active{background:var(--surface3)}
+.nav-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.nav-sub{font-size:12px;color:var(--text2);margin-top:1px}
+
+/* ─── SCREEN 1: HOME ────────────────────────────────── */
+#s-home{background:var(--black)}
+
+.home-header{
+  padding:16px 16px 12px;
+  background:var(--black);
+}
+.home-greeting{font-size:13px;color:var(--text2);margin-bottom:4px}
+.home-title{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.home-title span{color:var(--green)}
+
+/* Map preview area */
+.map-preview{
+  margin:0 16px 16px;
+  height:180px;
+  border-radius:16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  position:relative;
+  overflow:hidden;
+}
+.map-svg-bg{width:100%;height:100%;opacity:.6}
+.map-overlay-pin{
+  position:absolute;
+  bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--green);
+  color:#000;
+  font-size:12px;font-weight:700;
+  padding:6px 14px;
+  border-radius:20px;
+  white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,200,83,.35);
+}
+
+/* Search card */
+.search-card{
+  margin:0 16px;
+  background:var(--surface);
+  border-radius:16px;
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.search-row{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.search-row:last-child{border-bottom:none}
+.search-row:active{background:var(--surface2)}
+
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green)}
+.dot-red{background:var(--red)}
+.dot-amber{background:var(--amber)}
+
+.search-line{
+  width:1px;height:20px;
+  background:var(--border2);
+  margin:0 4.5px;
+  flex-shrink:0;
+}
+
+.add-via{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 16px;
+  background:transparent;
+  width:100%;
+  border-top:1px solid var(--border);
+  color:var(--text3);
+  font-size:13px;font-weight:500;
+}
+.add-via:active{background:var(--surface2)}
+
+/* Time row */
+.time-row{
+  display:flex;gap:8px;
+  padding:12px 16px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.time-row::-webkit-scrollbar{display:none}
+.time-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 14px;
+  border-radius:20px;
+  border:1.5px solid var(--border);
+  background:var(--surface);
+  font-size:13px;font-weight:500;color:var(--text2);
+  white-space:nowrap;flex-shrink:0;
+  transition:all .15s;
+}
+.time-chip.active{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+
+.find-btn{
+  margin:4px 16px 20px;
+  width:calc(100% - 32px);
+  padding:17px;
+  border-radius:14px;
+  background:var(--green);
+  color:#000;
+  font-size:16px;font-weight:700;
+  letter-spacing:-.2px;
+  transition:opacity .15s;
+  box-shadow:0 4px 16px rgba(0,200,83,.25);
+}
+.find-btn:active{opacity:.85}
+
+/* Recents */
+.section-title{
+  padding:20px 16px 10px;
+  font-size:13px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.4px;
+}
+.recent-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  transition:background .15s;
+}
+.recent-item:active{background:var(--surface)}
+.recent-icon{
+  width:36px;height:36px;
+  border-radius:10px;
+  background:var(--surface2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.recent-name{font-size:14px;font-weight:500}
+.recent-sub{font-size:12px;color:var(--text3);margin-top:1px}
+.recent-arrow{margin-left:auto;color:var(--text3);font-size:16px}
+
+/* ─── SCREEN 2: ROUTES ──────────────────────────────── */
+#s-routes{}
+
+/* Conditions strip */
+.conditions-strip{
+  display:flex;gap:6px;
+  padding:10px 16px;
+  overflow-x:auto;scrollbar-width:none;
+  flex-shrink:0;
+}
+.conditions-strip::-webkit-scrollbar{display:none}
+.cond-tag{
+  display:flex;align-items:center;gap:5px;
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:11px;font-weight:600;
+  white-space:nowrap;flex-shrink:0;
+  border:1px solid;
+}
+.ct-rain{background:var(--blue-bg);border-color:rgba(0,122,255,.2);color:var(--blue)}
+.ct-traffic{background:var(--red-bg);border-color:rgba(255,59,48,.2);color:var(--red)}
+.ct-ok{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.ct-warn{background:var(--amber-bg);border-color:rgba(255,149,0,.2);color:var(--amber)}
+
+/* Schedule board */
+.schedule-board{
+  margin:0 16px 12px;
+  background:var(--surface);
+  border-radius:14px;
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.sb-title-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+}
+.sb-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.sb-live{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--green)}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.3s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.sb-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+}
+.sb-row:last-child{border-bottom:none}
+.sb-emoji{font-size:18px;flex-shrink:0}
+.sb-info{flex:1;min-width:0}
+.sb-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-detail{font-size:11px;color:var(--text3);margin-top:1px}
+.sb-right{text-align:right;flex-shrink:0}
+.sb-time{font-size:14px;font-weight:700}
+.sb-status{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:2px;display:inline-block}
+.ss-ok{background:var(--green-bg);color:var(--green)}
+.ss-delay{background:var(--red-bg);color:var(--red)}
+.ss-soon{background:var(--amber-bg);color:var(--amber)}
+
+/* Sort bar */
+.sort-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px 8px;
+}
+.sort-label{font-size:13px;font-weight:600;color:var(--text)}
+.sort-btn{
+  display:flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:600;color:var(--green);
+  background:var(--green-bg);
+  padding:4px 10px;border-radius:6px;
+}
+
+/* Route cards - Uber style */
+.route-card{
+  margin:0 16px 8px;
+  background:var(--surface);
+  border-radius:16px;
+  border:1.5px solid var(--border);
+  overflow:hidden;
+  transition:border-color .15s;
+  cursor:pointer;
+}
+.route-card.selected{border-color:var(--green)}
+.route-card:active{border-color:var(--border2)}
+
+.rc-top{
+  padding:14px 14px 10px;
+  display:flex;align-items:flex-start;justify-content:space-between;
+}
+
+.rc-left{}
+.rc-name{font-size:15px;font-weight:700;letter-spacing:-.2px;margin-bottom:6px}
+.rc-legs{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+
+.leg-pill{
+  display:flex;align-items:center;gap:3px;
+  padding:3px 8px;
+  border-radius:6px;
+  font-size:11px;font-weight:600;
+  background:var(--surface2);
+  border:1px solid var(--border2);
+}
+.leg-dist{font-size:10px;color:var(--text3);margin-left:1px}
+
+.leg-walk{color:#8E8E93}
+.leg-metro{color:#BF5AF2;background:rgba(191,90,242,.08);border-color:rgba(191,90,242,.2)}
+.leg-bus{color:var(--blue);background:var(--blue-bg);border-color:rgba(0,122,255,.2)}
+.leg-train{color:#BF5AF2;background:rgba(191,90,242,.08);border-color:rgba(191,90,242,.2)}
+.leg-scooter{color:var(--amber);background:var(--amber-bg);border-color:rgba(255,149,0,.2)}
+.leg-ev{color:var(--green);background:var(--green-bg);border-color:var(--green-border)}
+.leg-cab{color:var(--red);background:var(--red-bg);border-color:rgba(255,59,48,.2)}
+
+.leg-arrow{font-size:10px;color:var(--text3)}
+
+.rc-time-block{text-align:right;flex-shrink:0;margin-left:12px}
+.rc-time{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1}
+.rc-cost{font-size:12px;color:var(--text3);margin-top:2px}
+.rc-cost strong{color:var(--text2);font-weight:600}
+
+/* Route badge */
+.rc-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:700;
+  padding:2px 8px;
+  border-radius:4px;
+  margin-bottom:6px;
+  letter-spacing:.2px;
+  text-transform:uppercase;
+}
+.badge-eco{background:rgba(0,200,83,.15);color:var(--green)}
+.badge-fast{background:rgba(0,122,255,.12);color:var(--blue)}
+.badge-cheap{background:rgba(255,149,0,.12);color:var(--amber)}
+
+/* Conditions on card */
+.rc-conds{
+  display:flex;flex-wrap:wrap;gap:4px;
+  padding:0 14px 8px;
+}
+.rc-cond{
+  font-size:11px;font-weight:500;padding:3px 8px;border-radius:5px;
+  display:flex;align-items:center;gap:3px;
+}
+.rcc-ok{background:var(--green-bg);color:var(--green)}
+.rcc-warn{background:var(--amber-bg);color:var(--amber)}
+.rcc-bad{background:var(--red-bg);color:var(--red)}
+.rcc-info{background:var(--blue-bg);color:var(--blue)}
+
+/* CO2 bar on card */
+.rc-co2{
+  padding:8px 14px 12px;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.rc-co2-label{font-size:11px;color:var(--text3);flex-shrink:0;width:46px}
+.rc-co2-track{flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.rc-co2-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.rc-co2-val{font-size:11px;font-weight:700;flex-shrink:0;width:36px;text-align:right}
+
+/* Depart row */
+.rc-depart{
+  padding:8px 14px 12px;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rc-depart-time{font-size:12px;color:var(--text2)}
+.rc-depart-time strong{color:var(--text);font-weight:600}
+.rc-next-status{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px}
+
+/* Book button on card */
+.card-book-btn{
+  width:calc(100% - 28px);
+  margin:0 14px 14px;
+  padding:13px;
+  border-radius:12px;
+  background:var(--green);
+  color:#000;
+  font-size:14px;font-weight:700;
+  display:none;
+  align-items:center;justify-content:center;
+  transition:opacity .15s;
+}
+.card-book-btn:active{opacity:.85}
+.route-card.selected .card-book-btn{display:flex}
+
+/* ─── SCREEN 3: JOURNEY DETAIL ──────────────────────── */
+#s-detail{}
+
+/* Route map - Zomato-style illustrated journey */
+.journey-section{
+  margin:12px 16px;
+  background:var(--surface);
+  border-radius:16px;
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+.journey-section-title{
+  padding:12px 14px 10px;
+  font-size:12px;font-weight:700;
+  color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+/* Timeline - industry standard */
+.journey-timeline{padding:14px}
+.jt-step{
+  display:flex;gap:12px;
+  padding-bottom:18px;
+  position:relative;
+}
+.jt-step:last-child{padding-bottom:0}
+
+.jt-left{
+  display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;width:20px;
+}
+.jt-dot{
+  width:10px;height:10px;
+  border-radius:50%;
+  border:2px solid var(--green);
+  background:var(--black);
+  flex-shrink:0;
+  position:relative;z-index:1;
+}
+.jt-dot.filled{background:var(--green)}
+.jt-dot.dim{border-color:var(--border2)}
+.jt-line{
+  flex:1;width:1.5px;
+  background:var(--border2);
+  margin:3px 0;
+  min-height:20px;
+}
+.jt-line.green{background:var(--green);opacity:.4}
+
+.jt-right{flex:1;padding-top:0}
+.jt-place{font-size:14px;font-weight:600;color:var(--text)}
+.jt-time{font-size:12px;color:var(--green);font-weight:600;margin-top:1px}
+.jt-mode-row{
+  display:flex;align-items:center;gap:6px;
+  margin-top:6px;padding:6px 10px;
+  background:var(--surface2);border-radius:8px;
+}
+.jt-mode-icon{font-size:14px}
+.jt-mode-info{flex:1}
+.jt-mode-name{font-size:12px;font-weight:600;color:var(--text2)}
+.jt-mode-detail{font-size:11px;color:var(--text3);margin-top:1px}
+.jt-mode-dur{font-size:12px;font-weight:600;color:var(--text2);flex-shrink:0}
+
+/* Summary stats */
+.stats-row{
+  display:flex;
+  margin:0 16px 12px;
+  gap:8px;
+}
+.stat-card{
+  flex:1;
+  background:var(--surface);
+  border-radius:14px;
+  border:1px solid var(--border);
+  padding:12px;
+  text-align:center;
+}
+.stat-val{font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--text)}
+.stat-val.green{color:var(--green)}
+.stat-val.amber{color:var(--amber)}
+.stat-key{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+
+/* Carbon card */
+.carbon-card{
+  margin:0 16px 12px;
+  background:var(--surface);
+  border-radius:16px;
+  border:1px solid var(--border);
+  padding:14px;
+}
+.carbon-title{
+  font-size:12px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;
+  margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;
+}
+.carbon-bar-row{
+  display:flex;align-items:center;gap:8px;
+  margin-bottom:8px;
+}
+.carbon-bar-row:last-child{margin-bottom:0}
+.cb-label{font-size:11px;color:var(--text3);width:68px;flex-shrink:0}
+.cb-track{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.cb-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.cb-val{font-size:11px;font-weight:700;width:38px;text-align:right;flex-shrink:0}
+
+.carbon-highlight{
+  margin-top:10px;padding:10px 12px;
+  background:var(--green-bg);
+  border:1px solid var(--green-border);
+  border-radius:10px;
+  font-size:12px;color:var(--green);line-height:1.5;
+}
+
+/* AI Reason */
+.ai-reason{
+  margin:0 16px 12px;
+  padding:12px 14px;
+  background:var(--surface);
+  border-radius:14px;
+  border:1px solid var(--border);
+  font-size:13px;color:var(--text2);line-height:1.6;
+}
+.ai-reason-label{
+  font-size:10px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;
+  margin-bottom:6px;
+}
+
+/* Payment */
+.pay-section{margin:0 16px 12px}
+.pay-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.pay-card{
+  background:var(--surface);
+  border-radius:14px;
+  border:1px solid var(--border);
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.pay-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:14px;
+}
+.pay-row:last-child{border-bottom:none}
+.pay-label{color:var(--text2)}
+.pay-value{font-weight:600}
+.pay-total{background:var(--surface2)}
+.pay-total .pay-label{color:var(--text);font-weight:700}
+.pay-total .pay-value{color:var(--green);font-weight:800;font-size:16px}
+
+.pay-methods{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin-bottom:14px;
+}
+.pm{
+  padding:11px 6px;
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:12px;
+  text-align:center;
+  font-size:12px;font-weight:600;color:var(--text2);
+  cursor:pointer;transition:all .15s;
+}
+.pm.sel{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.pm:active{background:var(--surface2)}
+
+.book-btn{
+  width:100%;padding:17px;
+  border-radius:14px;
+  background:var(--green);
+  color:#000;
+  font-size:16px;font-weight:700;
+  letter-spacing:-.2px;
+  transition:opacity .15s;
+  box-shadow:0 4px 16px rgba(0,200,83,.2);
+}
+.book-btn:active{opacity:.85}
+
+/* ─── BOTTOM NAV ─────────────────────────────────────── */
+.bottom-nav{
+  height:72px;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex;align-items:stretch;
+  flex-shrink:0;
+  padding-bottom:var(--safe-bottom);
+}
+.nav-tab{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;
+  transition:opacity .15s;
+}
+.nav-tab:active{opacity:.6}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.2px}
+.nav-tab.active .nav-label{color:var(--green)}
+
+/* ─── BOOKING SUCCESS SHEET ─────────────────────────── */
+.sheet-backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.7);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  z-index:100;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+.sheet-backdrop.open{opacity:1;pointer-events:all}
+
+.bottom-sheet{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-radius:24px 24px 0 0;
+  border-top:1px solid var(--border2);
+  padding:0 20px 36px;
+  transform:translateY(100%);
+  transition:transform .38s cubic-bezier(.4,0,.2,1);
+  max-height:90%;
+  overflow-y:auto;
+}
+.sheet-backdrop.open .bottom-sheet{transform:translateY(0)}
+
+.sheet-handle{
+  width:36px;height:4px;
+  background:var(--border2);border-radius:2px;
+  margin:12px auto 20px;
+}
+
+.sheet-success-icon{
+  width:64px;height:64px;
+  border-radius:50%;
+  background:var(--green-bg);
+  border:2px solid var(--green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin:0 auto 14px;
+  animation:scaleIn .4s .1s both cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes scaleIn{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+
+.sheet-title{font-size:22px;font-weight:800;text-align:center;letter-spacing:-.3px;margin-bottom:4px}
+.sheet-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:6px;line-height:1.5}
+.sheet-ref{
+  font-size:13px;font-weight:700;color:var(--green);
+  text-align:center;margin-bottom:20px;
+  background:var(--green-bg);padding:6px 16px;border-radius:8px;display:inline-block;
+  width:100%;
+}
+
+.sheet-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ss-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:14px;padding:13px;text-align:center;
+}
+.ss-icon{font-size:20px;margin-bottom:4px}
+.ss-val{font-size:16px;font-weight:800;color:var(--green);margin-bottom:2px}
+.ss-key{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+
+.tree-block{
+  background:rgba(0,200,83,.06);
+  border:1px solid var(--green-border);
+  border-radius:14px;
+  padding:13px 14px;
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:12px;
+}
+.tree-icons{font-size:20px;flex-shrink:0}
+.tree-text{font-size:13px;color:var(--text2);line-height:1.5}
+.tree-text strong{color:var(--green)}
+
+.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sheet-action-btn{
+  padding:12px;border-radius:12px;
+  border:1.5px solid var(--border);
+  background:var(--surface2);
+  color:var(--text2);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.sheet-action-btn:active{background:var(--surface3)}
+
+.sheet-done-btn{
+  width:100%;padding:16px;
+  border-radius:13px;
+  background:var(--green);color:#000;
+  font-size:16px;font-weight:700;letter-spacing:-.2px;
+  cursor:pointer;transition:opacity .15s;
+}
+.sheet-done-btn:active{opacity:.85}
+
+/* ─── VIA ROW IN SEARCH ─────────────────────────────── */
+.via-search-row{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  animation:fadeDown .2s ease;
+}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.via-remove{
+  width:20px;height:20px;
+  border-radius:50%;
+  background:var(--surface3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--text3);flex-shrink:0;
+  margin-left:auto;
+}
+.via-remove:active{background:var(--red-bg);color:var(--red)}
+
+/* ─── MISC ───────────────────────────────────────────── */
+.separator{height:1px;background:var(--border);margin:0 16px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- STATUS BAR -->
+  <div class="status">
+    <div class="status-time" id="clock">9:15</div>
+    <div class="status-icons">
+      <span>●●●</span>
+      <span style="font-size:14px">⊙</span>
+      <span>🔋</span>
+    </div>
+  </div>
+
+  <!-- SCREENS -->
+  <div class="screens">
+
+    <!-- ══ HOME ════════════════════════════════════════ -->
+    <div class="screen active" id="s-home">
+
+      <div class="home-header">
+        <div class="home-greeting">Good morning</div>
+        <div class="home-title">Where are you<br><span>going today?</span></div>
+      </div>
+
+      <!-- Map preview (SVG illustrated) -->
+      <div class="map-preview" style="margin:0 16px 14px">
+        <svg class="map-svg-bg" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="180" fill="#1a1a1a"/>
+          <!-- Roads -->
+          <line x1="0" y1="90" x2="400" y2="90" stroke="#252525" stroke-width="14"/>
+          <line x1="0" y1="130" x2="400" y2="130" stroke="#202020" stroke-width="8"/>
+          <line x1="0" y1="50" x2="400" y2="50" stroke="#202020" stroke-width="6"/>
+          <line x1="120" y1="0" x2="120" y2="180" stroke="#252525" stroke-width="10"/>
+          <line x1="260" y1="0" x2="260" y2="180" stroke="#252525" stroke-width="10"/>
+          <line x1="350" y1="0" x2="350" y2="180" stroke="#1e1e1e" stroke-width="5"/>
+          <!-- Road markings -->
+          <line x1="0" y1="90" x2="400" y2="90" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="20 20"/>
+          <!-- Metro line -->
+          <path d="M0,60 Q100,55 200,60 Q300,65 400,55" stroke="#5E2D8B" stroke-width="3" fill="none" opacity=".6"/>
+          <!-- Parks/blocks -->
+          <rect x="140" y="100" width="50" height="30" rx="4" fill="#1a2a1a" opacity=".8"/>
+          <rect x="280" y="30" width="40" height="20" rx="3" fill="#1e1e2a" opacity=".7"/>
+          <rect x="20" y="100" width="60" height="40" rx="4" fill="#1e1e1e" opacity=".9"/>
+          <!-- Location dots -->
+          <circle cx="80" cy="90" r="6" fill="#00C853"/>
+          <circle cx="80" cy="90" r="10" fill="#00C853" opacity=".2"/>
+          <circle cx="310" cy="90" r="6" fill="#FF3B30"/>
+          <circle cx="310" cy="90" r="10" fill="#FF3B30" opacity=".2"/>
+          <!-- Route line -->
+          <path d="M80,90 Q140,60 200,70 Q250,80 310,90" stroke="#00C853" stroke-width="2.5" fill="none" stroke-dasharray="6 4" opacity=".7"/>
+        </svg>
+        <div class="map-overlay-pin">📍 Chennai, Tamil Nadu</div>
+      </div>
+
+      <!-- Search card -->
+      <div class="search-card" id="search-card">
+        <div class="search-row">
+          <div class="dot dot-green"></div>
+          <input id="origin" value="T. Nagar, Chennai" placeholder="Starting point" />
+        </div>
+        <div style="display:flex;align-items:center;padding:0 16px">
+          <div class="search-line"></div>
+        </div>
+        <div id="via-container"></div>
+        <div class="search-row">
+          <div class="dot dot-red"></div>
+          <input id="dest" placeholder="Where to?" />
+        </div>
+      </div>
+      <button class="add-via" onclick="addVia()">
+        <span style="font-size:16px;color:var(--text3)">⊕</span> Add stop via
+      </button>
+
+      <!-- Time chips -->
+      <div class="time-row">
+        <div class="time-chip active" onclick="selTime(this)">🕐 Leave now</div>
+        <div class="time-chip" onclick="selTime(this)">📅 Schedule</div>
+        <div class="time-chip" onclick="selTime(this)">🌙 Tonight</div>
+      </div>
+
+      <button class="find-btn" onclick="findRoutes()">Search Routes</button>
+
+      <!-- Recent destinations -->
+      <div class="section-title">Recent</div>
+      <div class="recent-item" onclick="setDest('Chennai Central')">
+        <div class="recent-icon">🚉</div>
+        <div>
+          <div class="recent-name">Chennai Central</div>
+          <div class="recent-sub">Railway station · 7.8 km</div>
+        </div>
+        <div class="recent-arrow">›</div>
+      </div>
+      <div class="separator"></div>
+      <div class="recent-item" onclick="setDest('Guindy, Chennai')">
+        <div class="recent-icon">🏢</div>
+        <div>
+          <div class="recent-name">Guindy</div>
+          <div class="recent-sub">Industrial area · 5.2 km</div>
+        </div>
+        <div class="recent-arrow">›</div>
+      </div>
+      <div class="separator"></div>
+      <div class="recent-item" onclick="setDest('Ashok Pillar')">
+        <div class="recent-icon">📍</div>
+        <div>
+          <div class="recent-name">Ashok Pillar</div>
+          <div class="recent-sub">Landmark · 4.1 km</div>
+        </div>
+        <div class="recent-arrow">›</div>
+      </div>
+    </div>
+
+    <!-- ══ ROUTES ═══════════════════════════════════════ -->
+    <div class="screen" id="s-routes">
+      <div class="nav-header">
+        <div class="back-btn" onclick="nav('s-home')">‹</div>
+        <div>
+          <div class="nav-title" id="routes-title">Routes</div>
+          <div class="nav-sub" id="routes-sub"></div>
+        </div>
+      </div>
+
+      <!-- Live conditions -->
+      <div class="conditions-strip" id="cond-strip"></div>
+
+      <!-- Live schedule board -->
+      <div class="schedule-board">
+        <div class="sb-title-row">
+          <div class="sb-title">Live Departures</div>
+          <div class="sb-live"><div class="live-dot"></div>Updated now</div>
+        </div>
+        <div id="sched-rows"></div>
+      </div>
+
+      <!-- Route list -->
+      <div class="sort-bar">
+        <div class="sort-label" id="route-count">6 options</div>
+        <div class="sort-btn">🌿 Eco ranked</div>
+      </div>
+      <div id="route-list"></div>
+    </div>
+
+    <!-- ══ JOURNEY DETAIL / BOOK ════════════════════════ -->
+    <div class="screen" id="s-detail">
+      <div class="nav-header">
+        <div class="back-btn" onclick="nav('s-routes')">‹</div>
+        <div>
+          <div class="nav-title" id="detail-title">Journey Details</div>
+          <div class="nav-sub" id="detail-sub"></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" id="detail-stats"></div>
+
+      <!-- Journey timeline (Uber-style) -->
+      <div class="journey-section">
+        <div class="journey-section-title">
+          <span>Your Journey</span>
+          <span style="color:var(--green);font-size:11px" id="detail-depart-label"></span>
+        </div>
+        <div class="journey-timeline" id="journey-timeline"></div>
+      </div>
+
+      <!-- Carbon comparison -->
+      <div class="carbon-card">
+        <div class="carbon-title">🌿 Carbon Footprint</div>
+        <div id="carbon-bars"></div>
+        <div class="carbon-highlight" id="carbon-highlight"></div>
+      </div>
+
+      <!-- AI Reason -->
+      <div class="ai-reason">
+        <div class="ai-reason-label">Why this route</div>
+        <div id="ai-reason-text"></div>
+      </div>
+
+      <!-- Payment -->
+      <div class="pay-section">
+        <div class="pay-title">Payment</div>
+        <div class="pay-card" id="pay-table"></div>
+        <div class="pay-title" style="margin-top:12px">Pay with</div>
+        <div class="pay-methods">
+          <div class="pm" onclick="selPay(this)">📱 UPI</div>
+          <div class="pm" onclick="selPay(this)">💳 Card</div>
+          <div class="pm" onclick="selPay(this)">🏦 Bank</div>
+        </div>
+        <button class="book-btn" onclick="book()">Book & Pay</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-tab active" onclick="nav('s-home')">
+      <div class="nav-icon">🗺️</div>
+      <div class="nav-label">Plan</div>
+    </div>
+    <div class="nav-tab">
+      <div class="nav-icon">🎫</div>
+      <div class="nav-label">Tickets</div>
+    </div>
+    <div class="nav-tab">
+      <div class="nav-icon">🌿</div>
+      <div class="nav-label">EcoScore</div>
+    </div>
+    <div class="nav-tab">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Profile</div>
+    </div>
+  </div>
+
+  <!-- BOOKING SUCCESS SHEET -->
+  <div class="sheet-backdrop" id="sheet">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-success-icon">✓</div>
+      <div class="sheet-title">Journey Booked</div>
+      <div class="sheet-sub" id="sheet-sub"></div>
+      <div class="sheet-ref" id="sheet-ref">ECO-XXXX</div>
+      <div class="sheet-stats" id="sheet-stats"></div>
+      <div class="tree-block" id="tree-block"></div>
+      <div class="sheet-actions">
+        <button class="sheet-action-btn" onclick="alert('Tickets saved!')">📄 Tickets</button>
+        <button class="sheet-action-btn" onclick="alert('Shared!')">📤 Share</button>
+      </div>
+      <button class="sheet-done-btn" onclick="closeSheet()">Done</button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+/* ── CLOCK ─────────────────────────────────────────── */
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+}
+tick(); setInterval(tick,15000);
+
+/* ── STATE ─────────────────────────────────────────── */
+let vias=[];
+let viaCount=0;
+let selectedRoute=null;
+let isNandanam=false;
+
+/* ── TIME FROM NOW ─────────────────────────────────── */
+function tf(min){
+  const d=new Date();d.setMinutes(d.getMinutes()+min);
+  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+
+/* ── NAV ────────────────────────────────────────────── */
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active','slide-out');
+  });
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>{
+    t.classList.remove('active');
+    if((i===0&&id==='s-home')||(i===1&&id==='s-routes')||(i===2&&id==='s-detail'))t.classList.add('active');
+  });
+}
+
+/* ── VIA STOPS ─────────────────────────────────────── */
+function addVia(){
+  viaCount++;
+  const id='v'+viaCount;
+  vias.push(id);
+  const card=document.getElementById('search-card');
+  const destRow=card.querySelector('#dest').closest('.search-row');
+
+  const row=document.createElement('div');
+  row.className='via-search-row';
+  row.id='row-'+id;
+  row.innerHTML=`
+    <div class="dot dot-amber"></div>
+    <input id="${id}" placeholder="Add stop (e.g. Nandanam)" style="flex:1;background:transparent;border:none;outline:none;font-size:15px;color:var(--text);font-family:inherit"/>
+    <div class="via-remove" onclick="removeVia('${id}')">✕</div>
+  `;
+  card.insertBefore(row,destRow);
+
+  // Demo hint
+  setTimeout(()=>{
+    const el=document.getElementById(id);
+    if(el&&!el.value) el.placeholder='e.g. Nandanam, Guindy…';
+  },100);
+}
+
+function removeVia(id){
+  const row=document.getElementById('row-'+id);
+  if(row) row.remove();
+  vias=vias.filter(v=>v!==id);
+}
+
+/* ── DATA ───────────────────────────────────────────── */
+function getRoutes(nandanam){
+  if(nandanam) return [
+    {id:'sn-metro',eco:93,badge:'eco',badgeLabel:'Eco Pick',
+     name:'Scooter → Metro',
+     legs:[
+       {type:'scooter',label:'E-Scooter',icon:'🛴',dist:'2.1km',dur:'8 min',cls:'leg-scooter'},
+       {type:'walk',   label:'Walk',     icon:'🚶',dist:'200m', dur:'2 min',cls:'leg-walk'},
+       {type:'metro',  label:'Metro',    icon:'🚇',dist:'3.4km',dur:'9 min',cls:'leg-metro'},
+       {type:'walk',   label:'Walk',     icon:'🚶',dist:'380m', dur:'4 min',cls:'leg-walk'},
+     ],
+     totalMin:27,cost:'₹57',co2:0.28,saving:90,
+     conds:[
+       {cls:'rcc-ok',t:'Scooter 180m away'},
+       {cls:'rcc-ok',t:'Metro on time from Nandanam'},
+     ],
+     nextCls:'ss-ok',nextLabel:'Scooter ready',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'green',
+        mode:{icon:'🛴',name:'E-Scooter · Yulu',detail:'Unlock via app · 2.1 km',dur:'8 min'}},
+       {place:'Nandanam',time:()=>tf(10),dot:'filled',line:'green',
+        mode:{icon:'🚶',name:'Walk to Metro entrance',detail:'200m · covered walkway',dur:'2 min'}},
+       {place:'Nandanam Metro',time:()=>tf(12),dot:'',line:'',
+        mode:{icon:'🚇',name:'Metro · Blue Line',detail:'Towards Airport · Platform 1',dur:'9 min'}},
+       {place:'Chennai Central',time:()=>tf(27),dot:'dim',line:null,mode:null},
+     ],
+     payment:[
+       {l:'E-Scooter (2.1 km × ₹8)',v:'₹17'},
+       {l:'Scooter unlock',v:'₹5'},
+       {l:'Metro · Nandanam → Central',v:'₹30'},
+       {l:'Convenience fee',v:'₹5'},
+     ],total:'₹57',
+     reason:'Fastest route via Nandanam. Scooter avoids peak-hour traffic entirely. Metro leg is electric and on schedule. Total walk exposure is only 580m — manageable even in light rain.',
+    },
+    {id:'mm-metro',eco:88,badge:null,badgeLabel:null,
+     name:'Metro → Metro via Nandanam',
+     legs:[
+       {type:'walk', label:'Walk', icon:'🚶',dist:'400m',dur:'5 min',cls:'leg-walk'},
+       {type:'metro',label:'Metro',icon:'🚇',dist:'2.8km',dur:'8 min',cls:'leg-metro'},
+       {type:'walk', label:'Walk', icon:'🚶',dist:'450m',dur:'5 min',cls:'leg-walk'},
+       {type:'metro',label:'Metro',icon:'🚇',dist:'3.4km',dur:'9 min',cls:'leg-metro'},
+       {type:'walk', label:'Walk', icon:'🚶',dist:'350m',dur:'4 min',cls:'leg-walk'},
+     ],
+     totalMin:34,cost:'₹60',co2:0.38,saving:86,
+     conds:[
+       {cls:'rcc-ok',t:'Both metro lines on time'},
+       {cls:'rcc-warn',t:'Short walks in rain · total 1.2km'},
+     ],
+     nextCls:'ss-ok',nextLabel:'Next metro 4 min',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'green',
+        mode:{icon:'🚶',name:'Walk to T.Nagar Metro',detail:'400m · 5 min',dur:'5 min'}},
+       {place:'T.Nagar Metro Stn',time:()=>tf(5),dot:'filled',line:'green',
+        mode:{icon:'🚇',name:'Metro · Blue Line towards Airport',detail:'Platform 1 · 3 stops',dur:'8 min'}},
+       {place:'Nandanam',time:()=>tf(18),dot:'filled',line:'green',
+        mode:{icon:'🚶',name:'Walk to Nandanam exit',detail:'450m · Exit B',dur:'5 min'}},
+       {place:'Nandanam → Central Metro',time:()=>tf(23),dot:'',line:'',
+        mode:{icon:'🚇',name:'Metro · continue to Central',detail:'Platform 2 · 2 stops',dur:'9 min'}},
+       {place:'Chennai Central',time:()=>tf(34),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Metro token (T.Nagar → Nandanam)',v:'₹30'},{l:'Metro token (Nandanam → Central)',v:'₹30'}],
+     total:'₹60',
+     reason:'All-metro option via Nandanam. Cleanest public transit route. Both lines are running on schedule. Total walk distance is 1.2km split across 3 segments — carry an umbrella.',
+    },
+    {id:'bus-nd',eco:58,badge:null,badgeLabel:null,
+     name:'Bus via Nandanam',
+     legs:[
+       {type:'walk',label:'Walk',icon:'🚶',dist:'600m',dur:'7 min',cls:'leg-walk'},
+       {type:'bus', label:'Bus 21C',icon:'🚍',dist:'4.2km',dur:'16 min',cls:'leg-bus'},
+       {type:'walk',label:'Walk',icon:'🚶',dist:'300m',dur:'3 min',cls:'leg-walk'},
+       {type:'bus', label:'Bus 29D',icon:'🚍',dist:'3km',dur:'13 min',cls:'leg-bus'},
+       {type:'walk',label:'Walk',icon:'🚶',dist:'250m',dur:'3 min',cls:'leg-walk'},
+     ],
+     totalMin:48,cost:'₹32',co2:0.8,saving:70,
+     conds:[
+       {cls:'rcc-bad',t:'Bus 21C delayed 8 min'},
+       {cls:'rcc-warn',t:'Multiple walks in rain'},
+     ],
+     nextCls:'ss-delay',nextLabel:'Delayed 8 min',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'',
+        mode:{icon:'🚶',name:'Walk to bus stop',detail:'600m · 7 min',dur:'7 min'}},
+       {place:'Bus Stop · T.Nagar',time:()=>tf(7),dot:'filled',line:'',
+        mode:{icon:'🚍',name:'Bus 21C · delayed ~8 min',detail:'Via Mount Road to Nandanam',dur:'16 min'}},
+       {place:'Nandanam',time:()=>tf(31),dot:'',line:'',
+        mode:{icon:'🚍',name:'Bus 29D',detail:'Nandanam → Chennai Central',dur:'13 min'}},
+       {place:'Chennai Central',time:()=>tf(48),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Bus 21C ticket',v:'₹18'},{l:'Bus 29D ticket',v:'₹14'}],
+     total:'₹32',
+     reason:'Cheapest via-Nandanam option. However, Bus 21C is currently running 8 minutes late due to traffic at Mount Road. Multiple walk segments in rain. Consider metro for reliability.',
+    },
+  ];
+
+  return [
+    {id:'metro',eco:94,badge:'eco',badgeLabel:'Eco Pick',
+     name:'Walk + Metro + Walk',
+     legs:[
+       {type:'walk', label:'Walk', icon:'🚶',dist:'420m',dur:'5 min',cls:'leg-walk'},
+       {type:'metro',label:'Metro',icon:'🚇',dist:'6.2km',dur:'12 min',cls:'leg-metro'},
+       {type:'walk', label:'Walk', icon:'🚶',dist:'380m',dur:'4 min',cls:'leg-walk'},
+     ],
+     totalMin:21,cost:'₹40',co2:0.32,saving:88,
+     conds:[
+       {cls:'rcc-ok',t:'Metro on time'},
+       {cls:'rcc-warn',t:'380m walk at end · bring umbrella'},
+     ],
+     nextCls:'ss-ok',nextLabel:'Next in 4 min',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'green',
+        mode:{icon:'🚶',name:'Walk to T.Nagar Metro',detail:'420m · Usman Rd entrance',dur:'5 min'}},
+       {place:'T.Nagar Metro Station',time:()=>tf(5),dot:'filled',line:'green',
+        mode:{icon:'🚇',name:'Metro · Blue Line',detail:'Platform 1 · Towards Airport · 6 stops',dur:'12 min'}},
+       {place:'Chennai Central Metro',time:()=>tf(17),dot:'filled',line:'',
+        mode:{icon:'🚶',name:'Walk to Chennai Central',detail:'380m · Exit Gate 2',dur:'4 min'}},
+       {place:'Chennai Central',time:()=>tf(21),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Metro token (T.Nagar → Central)',v:'₹40'},{l:'Smart card discount',v:'−₹5'}],
+     total:'₹35',
+     reason:'Best balance of speed, cost and emissions. Metro uses regenerative braking and runs on the grid. Both walks are under 450m with station shelter. No traffic risk.',
+    },
+    {id:'cycle-train',eco:98,badge:null,badgeLabel:null,
+     name:'Cycle + Suburban Train',
+     legs:[
+       {type:'cycle',label:'Cycle',icon:'🚲',dist:'2.1km',dur:'9 min',cls:'leg-ev'},
+       {type:'train',label:'Train',icon:'🚆',dist:'5.8km',dur:'14 min',cls:'leg-train'},
+       {type:'walk', label:'Walk', icon:'🚶',dist:'300m',dur:'3 min',cls:'leg-walk'},
+     ],
+     totalMin:30,cost:'₹25',co2:0.08,saving:97,
+     conds:[
+       {cls:'rcc-warn',t:'Wet roads · cycle carefully'},
+       {cls:'rcc-ok',t:'Train on schedule'},
+     ],
+     nextCls:'ss-soon',nextLabel:'Train in 7 min',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'green',
+        mode:{icon:'🚲',name:'Yulu Cycle · unlock via app',detail:'2.1 km to Mambalam Station · wet roads today',dur:'9 min'}},
+       {place:'Mambalam Station',time:()=>tf(9),dot:'filled',line:'green',
+        mode:{icon:'🚆',name:'Suburban Train',detail:'Platform 3 · Chennai Central · 4 stops',dur:'14 min'}},
+       {place:'Chennai Central',time:()=>tf(30),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Train ticket (Mambalam → Central)',v:'₹15'},{l:'Yulu cycle rental (30 min)',v:'₹10'}],
+     total:'₹25',
+     reason:'Lowest carbon footprint of all options. Zero cycle emissions, efficient electric train. Wet roads today — recommended only if comfortable cycling in light rain. Carry helmet.',
+    },
+    {id:'ev-pool',eco:90,badge:'fast',badgeLabel:'Fastest',
+     name:'EV Car Pool',
+     legs:[
+       {type:'ev',label:'EV Pool',icon:'🚗',dist:'7.8km',dur:'14 min',cls:'leg-ev'},
+     ],
+     totalMin:14,cost:'₹80',co2:0.22,saving:92,
+     conds:[
+       {cls:'rcc-ok',t:'EV arriving in 3 min'},
+       {cls:'rcc-warn',t:'Light slowdown · Mount Rd'},
+     ],
+     nextCls:'ss-soon',nextLabel:'EV 3 min away',
+     timeline:[
+       {place:'T. Nagar (Pickup)',time:()=>tf(3),dot:'filled',line:'green',
+        mode:{icon:'🚗',name:'BluSmart EV Pool',detail:'Shared ride · AC · 7.8 km · pooled with 1 other passenger',dur:'14 min'}},
+       {place:'Chennai Central',time:()=>tf(17),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'EV Pool ride',v:'₹70'},{l:'Platform fee',v:'₹10'}],
+     total:'₹80',
+     reason:'Fastest option with zero direct emissions. Pooling reduces per-person carbon by 50%. Door-to-door — no walking in rain. EV is 3 minutes from your location.',
+    },
+    {id:'scooter-bus',eco:79,badge:null,badgeLabel:null,
+     name:'E-Scooter + Bus',
+     legs:[
+       {type:'scooter',label:'Scooter',icon:'🛴',dist:'3.4km',dur:'12 min',cls:'leg-scooter'},
+       {type:'bus',    label:'Bus 27B',icon:'🚍',dist:'4.1km',dur:'18 min',cls:'leg-bus'},
+       {type:'walk',   label:'Walk',   icon:'🚶',dist:'250m', dur:'3 min', cls:'leg-walk'},
+     ],
+     totalMin:36,cost:'₹52',co2:0.44,saving:83,
+     conds:[
+       {cls:'rcc-warn',t:'Traffic at Nandanam · +5 min'},
+       {cls:'rcc-ok',t:'6 scooters 180m away'},
+     ],
+     nextCls:'ss-ok',nextLabel:'Scooter ready',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'green',
+        mode:{icon:'🛴',name:'Yulu E-Scooter',detail:'3.4 km to Nandanam · expect traffic on Nandanam Jn',dur:'12 min'}},
+       {place:'Nandanam Bus Stop',time:()=>tf(14),dot:'filled',line:'',
+        mode:{icon:'🚍',name:'Bus 27B',detail:'Nandanam → Chennai Central · 4.1 km',dur:'18 min'}},
+       {place:'Chennai Central',time:()=>tf(36),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Scooter unlock',v:'₹5'},{l:'Scooter 3.4km × ₹8',v:'₹27'},{l:'Bus 27B ticket',v:'₹20'}],
+     total:'₹52',
+     reason:'Flexible mid-range option. Scooter handles first leg efficiently; bus takes over for longer stretch. Traffic at Nandanam junction may add 5 minutes to the scooter leg.',
+    },
+    {id:'bus-only',eco:68,badge:'cheap',badgeLabel:'Cheapest',
+     name:'Bus 21C Direct',
+     legs:[
+       {type:'walk',label:'Walk',   icon:'🚶',dist:'600m',dur:'7 min',cls:'leg-walk'},
+       {type:'bus', label:'Bus 21C',icon:'🚍',dist:'7.2km',dur:'22 min',cls:'leg-bus'},
+       {type:'walk',label:'Walk',   icon:'🚶',dist:'520m',dur:'6 min',cls:'leg-walk'},
+     ],
+     totalMin:42,cost:'₹18',co2:0.62,saving:77,
+     conds:[
+       {cls:'rcc-bad',t:'Bus 21C delayed ~8 min'},
+       {cls:'rcc-warn',t:'Two walks: 600m + 520m in rain'},
+     ],
+     nextCls:'ss-delay',nextLabel:'Delayed 8 min',
+     timeline:[
+       {place:'T. Nagar',time:()=>tf(0),dot:'filled',line:'',
+        mode:{icon:'🚶',name:'Walk to bus stop',detail:'600m · Anna Salai bus stand',dur:'7 min'}},
+       {place:'Bus Stop · T.Nagar',time:()=>tf(7),dot:'filled',line:'',
+        mode:{icon:'🚍',name:'Bus 21C · currently delayed 8 min',detail:'Heavy traffic on Mount Road · 7.2 km',dur:'22 min'}},
+       {place:'Chennai Central',time:()=>tf(42),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Bus 21C ticket',v:'₹18'}],
+     total:'₹18',
+     reason:'Cheapest but currently running 8 minutes late. Both walk segments exceed 500m which is uncomfortable in today\'s rain. Best only if cost is the priority.',
+    },
+    {id:'petrol',eco:4,badge:null,badgeLabel:null,
+     name:'Petrol Cab / Auto',
+     legs:[
+       {type:'cab',label:'Cab',icon:'🚖',dist:'7.8km',dur:'18 min',cls:'leg-cab'},
+     ],
+     totalMin:18,cost:'₹130',co2:2.7,saving:0,
+     conds:[
+       {cls:'rcc-bad',t:'Highest CO₂ on this route'},
+       {cls:'rcc-warn',t:'Surge pricing active'},
+     ],
+     nextCls:'ss-delay',nextLabel:'Surge +25%',
+     timeline:[
+       {place:'T. Nagar (Pickup)',time:()=>tf(4),dot:'filled',line:'',
+        mode:{icon:'🚖',name:'Petrol Cab',detail:'7.8 km · surge pricing active · peak hour',dur:'18 min'}},
+       {place:'Chennai Central',time:()=>tf(22),dot:'dim',line:null,mode:null},
+     ],
+     payment:[{l:'Cab base fare',v:'₹110'},{l:'Surge (peak hour)',v:'₹20'}],
+     total:'₹130',
+     reason:'⚠️ Highest carbon option — 2.7 kg CO₂ vs 0 for walking or cycling. Surge pricing adds cost. Shown for comparison only. Every green option above is faster, cheaper, or both.',
+    },
+  ];
+}
+
+function getLiveSchedule(nandanam){
+  return nandanam ? [
+    {icon:'🚇',name:'Metro · T.Nagar → Nandanam',detail:'Blue Line · Platform 1',time:tf(3),sc:'ss-ok',status:'On time'},
+    {icon:'🛴',name:'Yulu Scooter · 180m',detail:'6 units available nearby',time:'Now',sc:'ss-ok',status:'Ready'},
+    {icon:'🚍',name:'Bus 21C via Nandanam',detail:'Mount Rd → Nandanam → Central',time:tf(11+8),sc:'ss-delay',status:'Delayed 8 min'},
+  ] : [
+    {icon:'🚇',name:'Metro · Blue Line',detail:'T.Nagar → Central · Platform 1',time:tf(4),sc:'ss-ok',status:'On time'},
+    {icon:'🚆',name:'Suburban Train',detail:'Mambalam → Central · Platform 3',time:tf(7),sc:'ss-ok',status:'On time'},
+    {icon:'🚍',name:'Bus 21C Direct',detail:'Anna Salai → Chennai Central',time:tf(11+8),sc:'ss-delay',status:'Delayed 8 min'},
+    {icon:'🛴',name:'Yulu Scooter · 180m',detail:'6 units available',time:'Now',sc:'ss-ok',status:'Ready'},
+  ];
+}
+
+/* ── BUILD ROUTES ───────────────────────────────────── */
+function findRoutes(){
+  const dest=document.getElementById('dest').value.trim();
+  if(!dest){
+    document.getElementById('dest').style.color='var(--red)';
+    document.getElementById('dest').placeholder='Enter a destination';
+    return;
+  }
+  const origin=document.getElementById('origin').value||'T. Nagar';
+
+  // Check via for Nandanam
+  isNandanam=false;
+  vias.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.value.toLowerCase().includes('nandanam')) isNandanam=true;
+  });
+
+  const routes=getRoutes(isNandanam);
+  document.getElementById('routes-title').textContent=isNandanam?'Routes via Nandanam':'All Routes';
+  document.getElementById('routes-sub').textContent=`${origin} → ${dest}`;
+  document.getElementById('route-count').textContent=routes.length+' options';
+
+  // Conditions
+  const conds=isNandanam?[
+    {cls:'ct-ok',t:'✓ Metro running smoothly'},
+    {cls:'ct-rain',t:'🌧 Light rain'},
+    {cls:'ct-ok',t:'⚡ Scooters nearby'},
+    {cls:'ct-traffic',t:'🚦 Bus 21C delayed'},
+  ]:[
+    {cls:'ct-rain',t:'🌧 Light rain · 28°C'},
+    {cls:'ct-traffic',t:'🚦 Heavy traffic NH-48'},
+    {cls:'ct-ok',t:'✓ Metro on schedule'},
+    {cls:'ct-warn',t:'⏱ Peak hour till 10:30'},
+    {cls:'ct-ok',t:'⚡ Scooters available'},
+  ];
+  document.getElementById('cond-strip').innerHTML=conds.map(c=>
+    `<div class="cond-tag ${c.cls}">${c.t}</div>`).join('');
+
+  // Schedule
+  const sched=getLiveSchedule(isNandanam);
+  document.getElementById('sched-rows').innerHTML=sched.map(s=>`
+    <div class="sb-row">
+      <div class="sb-emoji">${s.icon}</div>
+      <div class="sb-info">
+        <div class="sb-name">${s.name}</div>
+        <div class="sb-detail">${s.detail}</div>
+      </div>
+      <div class="sb-right">
+        <div class="sb-time">${s.time}</div>
+        <div class="sb-status ${s.sc}">${s.status}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Route cards
+  const list=document.getElementById('route-list');
+  list.innerHTML='';
+  routes.forEach(r=>{
+    const co2pct=Math.min(100,(r.co2/2.7)*100);
+    const co2col=r.co2<0.3?'#00C853':r.co2<0.8?'#FF9500':'#FF3B30';
+    const legsHtml=r.legs.map((l,i)=>
+      `<div class="leg-pill ${l.cls}">${l.icon} ${l.label} <span class="leg-dist">${l.dist}</span></div>${i<r.legs.length-1?'<div class="leg-arrow">›</div>':''}`
+    ).join('');
+    const condsHtml=r.conds.map(c=>`<div class="rc-cond ${c.cls}">${c.t}</div>`).join('');
+
+    const div=document.createElement('div');
+    div.className='route-card';
+    div.id='card-'+r.id;
+    div.innerHTML=`
+      <div class="rc-top">
+        <div class="rc-left">
+          ${r.badge?`<div class="rc-badge badge-${r.badge}">${r.badgeLabel}</div>`:''}
+          <div class="rc-name">${r.name}</div>
+          <div class="rc-legs">${legsHtml}</div>
+        </div>
+        <div class="rc-time-block">
+          <div class="rc-time">${r.totalMin} min</div>
+          <div class="rc-cost"><strong>${r.cost}</strong></div>
+        </div>
+      </div>
+      <div class="rc-conds">${condsHtml}</div>
+      <div class="rc-co2">
+        <div class="rc-co2-label">CO₂</div>
+        <div class="rc-co2-track"><div class="rc-co2-fill" style="width:${co2pct}%;background:${co2col}"></div></div>
+        <div class="rc-co2-val" style="color:${co2col}">${r.co2===0?'0g':r.co2+'kg'}</div>
+      </div>
+      <div class="rc-depart">
+        <div class="rc-depart-time">Departs <strong>${r.timeline[0].time()}</strong></div>
+        <div class="rc-next-status ${r.nextCls}">${r.nextLabel}</div>
+      </div>
+      <button class="card-book-btn" onclick="openDetail('${r.id}')">View & Book →</button>
+    `;
+    div.addEventListener('click',e=>{
+      if(e.target.classList.contains('card-book-btn'))return;
+      document.querySelectorAll('.route-card').forEach(c=>c.classList.remove('selected'));
+      div.classList.add('selected');
+    });
+    list.appendChild(div);
+  });
+
+  nav('s-routes');
+}
+
+/* ── OPEN DETAIL ────────────────────────────────────── */
+function openDetail(id){
+  const routes=getRoutes(isNandanam);
+  selectedRoute=routes.find(r=>r.id===id);
+  if(!selectedRoute)return;
+  const r=selectedRoute;
+
+  document.getElementById('detail-title').textContent=r.name;
+  document.getElementById('detail-sub').textContent=`${r.totalMin} min · ${r.cost} · Eco Score ${r.eco}`;
+  document.getElementById('detail-depart-label').textContent=`Departs ${r.timeline[0].time()}`;
+
+  // Stats
+  const saved=(2.7-r.co2).toFixed(2);
+  document.getElementById('detail-stats').innerHTML=[
+    {val:r.totalMin+' min',key:'Duration',cls:''},
+    {val:r.co2>0?r.co2+'kg':'~0g',key:'CO₂ Emitted',cls:'green'},
+    {val:r.cost,key:'Total Cost',cls:'amber'},
+  ].map(s=>`<div class="stat-card"><div class="stat-val ${s.cls}">${s.val}</div><div class="stat-key">${s.key}</div></div>`).join('');
+
+  // Timeline
+  document.getElementById('journey-timeline').innerHTML=r.timeline.map((s,i)=>`
+    <div class="jt-step">
+      <div class="jt-left">
+        <div class="jt-dot ${s.dot||''}"></div>
+        ${s.line!==null?`<div class="jt-line ${s.line||''}"></div>`:''}
+      </div>
+      <div class="jt-right">
+        <div class="jt-place">${s.place}</div>
+        <div class="jt-time">${s.time()}</div>
+        ${s.mode?`
+        <div class="jt-mode-row">
+          <div class="jt-mode-icon">${s.mode.icon}</div>
+          <div class="jt-mode-info">
+            <div class="jt-mode-name">${s.mode.name}</div>
+            <div class="jt-mode-detail">${s.mode.detail}</div>
+          </div>
+          <div class="jt-mode-dur">${s.mode.dur}</div>
+        </div>`:''}
+      </div>
+    </div>
+  `).join('');
+
+  // Carbon bars
+  const comps=[
+    {label:'This route',co2:r.co2,col:r.co2<0.4?'#00C853':r.co2<1?'#FF9500':'#FF3B30'},
+    {label:'EV car',co2:0.32,col:'#00C853'},
+    {label:'Auto/cab',co2:1.9,col:'#FF9500'},
+    {label:'Petrol car',co2:2.7,col:'#FF3B30'},
+  ];
+  document.getElementById('carbon-bars').innerHTML=comps.map(c=>`
+    <div class="carbon-bar-row">
+      <div class="cb-label">${c.label}</div>
+      <div class="cb-track"><div class="cb-fill" style="width:${Math.max(3,(c.co2/2.7)*100)}%;background:${c.col}"></div></div>
+      <div class="cb-val" style="color:${c.col}">${c.co2===0?'0g':c.co2+'kg'}</div>
+    </div>
+  `).join('');
+  document.getElementById('carbon-highlight').textContent=
+    `You save ${(2.7-r.co2).toFixed(2)} kg CO₂ vs a petrol car — ${r.saving}% cleaner.`;
+
+  // Reason
+  document.getElementById('ai-reason-text').textContent=r.reason;
+
+  // Payment
+  document.getElementById('pay-table').innerHTML=
+    r.payment.map(p=>`<div class="pay-row"><div class="pay-label">${p.l}</div><div class="pay-value">${p.v}</div></div>`).join('')+
+    `<div class="pay-row pay-total"><div class="pay-label">Total</div><div class="pay-value">${r.total}</div></div>`;
+
+  nav('s-detail');
+}
+
+/* ── BOOK ────────────────────────────────────────────── */
+function book(){
+  const r=selectedRoute;if(!r)return;
+  const saved=(2.7-r.co2).toFixed(2);
+  const ref='ECO-'+Math.random().toString(36).slice(2,6).toUpperCase();
+
+  document.getElementById('sheet-sub').textContent=
+    r.name+' · '+(document.getElementById('origin').value||'T. Nagar')+' → '+
+    (document.getElementById('dest').value||'Destination');
+  document.getElementById('sheet-ref').textContent=ref;
+
+  document.getElementById('sheet-stats').innerHTML=[
+    {icon:'📏',val:'7.8 km',key:'Distance'},
+    {icon:'⏱',val:r.totalMin+' min',key:'Duration'},
+    {icon:'☁️',val:r.co2>0?r.co2+'kg':'~0g',key:'CO₂ Emitted'},
+    {icon:'🌿',val:saved+' kg',key:'CO₂ Saved'},
+  ].map(s=>`<div class="ss-card"><div class="ss-icon">${s.icon}</div><div class="ss-val">${s.val}</div><div class="ss-key">${s.key}</div></div>`).join('');
+
+  const hrs=Math.round(parseFloat(saved)/0.06);
+  document.getElementById('tree-block').innerHTML=`
+    <div class="tree-icons">🌳🌳${parseFloat(saved)>0.8?'🌳':''}</div>
+    <div class="tree-text">
+      You saved <strong>${saved} kg CO₂</strong> vs driving.<br>
+      Equal to a tree absorbing for <strong>${hrs} hours</strong>.<br>
+      <span style="color:var(--text3);font-size:12px">+${r.eco>85?12:8} EcoScore points earned</span>
+    </div>
+  `;
+  document.getElementById('sheet').classList.add('open');
+}
+
+function closeSheet(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('dest').value='';
+  vias=[];viaCount=0;
+  document.getElementById('via-container').innerHTML='';
+  selectedRoute=null;
+  nav('s-home');
+}
+
+/* ── MISC ────────────────────────────────────────────── */
+function setDest(v){document.getElementById('dest').value=v}
+function selTime(el){
+  document.querySelectorAll('.time-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+function selPay(el){
+  document.querySelectorAll('.pm').forEach(m=>m.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// Auto-fill demo
+setTimeout(()=>{
+  if(!document.getElementById('dest').value)
+    document.getElementById('dest').value='Chennai Central';
+},300);
+</script>
+</body>
+</html>
